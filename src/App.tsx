@@ -1,47 +1,150 @@
+﻿import { useEffect, useRef } from "react";
 import MenuItem from "./components/MenuItem";
 import OrderContents from "./components/OrderContents";
 import OrderTotals from "./components/OrderTotals";
 import TipPorcentageForm from "./components/TipPorcentageForm";
 import { menuItems } from "./data/db";
+import { formatCurrency } from "./helpers";
 import useOrder from "./hooks/useOrder";
-
-function App() {
-  const { order, addItem, removeItem, tip, setTip, placeOrder } = useOrder();
+export default function App() {
+  const state = useOrder();
+  const { order, receipt } = state;
+  const title = useRef<HTMLHeadingElement>(null);
+  const receiptTitle = useRef<HTMLHeadingElement>(null);
+  const previousReceipt = useRef(false);
+  useEffect(() => {
+    if (receipt) receiptTitle.current?.focus();
+    else if (previousReceipt.current) title.current?.focus();
+    previousReceipt.current = !!receipt;
+  }, [receipt]);
+  const count = order.reduce((sum, item) => sum + item.quantity, 0);
   return (
     <>
-      <header className="bg-teal-400 py-5">
-        <h1 className="text-center text-4xl font-black">
-          Calculadora de propinas y consumo
-        </h1>
+      <a className="skip-link" href="#main">
+        Saltar al contenido
+      </a>
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">DEL MENÚ A TU CUENTA</p>
+          <h1>
+            Calculadora de propinas <span>y consumo</span>
+          </h1>
+          <p className="muted">
+            Elige, ajusta y finaliza tu cuenta. Todos los precios en USD.
+          </p>
+        </div>
+        <span className="currency-badge">USD · Dólares</span>
       </header>
-
-      <main className="max-w-7xl mx-auto py-20 grid md:grid-cols-2">
-        <div className="p-5">
-          <h2 className="text-4xl font-black">Menu</h2>
-
-          <div className="space-y-3 mt-10">
-            {menuItems.map((item) => (
-              <MenuItem key={item.id} item={item} addItem={addItem} />
-            ))}
+      <p
+        className="announcement"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {state.message}
+      </p>
+      <main id="main" className={count ? "has-order" : ""}>
+        {receipt ? (
+          <section className="receipt panel" aria-labelledby="receipt-title">
+            <p className="eyebrow">CUENTA FINALIZADA</p>
+            <h2 id="receipt-title" ref={receiptTitle} tabIndex={-1}>
+              Tu comprobante
+            </h2>
+            <p className="muted">
+              Gracias. Aquí tienes el detalle de tu consumo.
+            </p>
+            <ul className="receipt-items">
+              {receipt.order.map((item) => (
+                <li key={item.id}>
+                  <div>
+                    <strong>{item.name}</strong>
+                    <p className="muted">
+                      {item.quantity} ×{" "}
+                      {formatCurrency(Math.round(item.price * 100))}
+                    </p>
+                  </div>
+                  <strong>
+                    {formatCurrency(
+                      Math.round(item.price * 100) * item.quantity,
+                    )}
+                  </strong>
+                </li>
+              ))}
+            </ul>
+            <OrderTotals order={receipt.order} percent={receipt.percent} />
+            <button className="primary" onClick={state.newOrder}>
+              Nueva orden
+            </button>
+          </section>
+        ) : (
+          <div className="workspace">
+            <section aria-labelledby="menu-title">
+              <div className="section-heading">
+                <h2 id="menu-title" ref={title} tabIndex={-1}>
+                  Menú
+                </h2>
+                <span className="muted">{menuItems.length} opciones</span>
+              </div>
+              <p className="muted menu-help">
+                Pulsa un producto para añadirlo a tu cuenta.
+              </p>
+              <div className="menu-list">
+                {menuItems.map((item) => (
+                  <MenuItem key={item.id} item={item} addItem={state.addItem} />
+                ))}
+              </div>
+            </section>
+            <section className="panel account" aria-labelledby="account-title">
+              <div className="section-heading">
+                <h2 id="account-title" tabIndex={-1}>
+                  Tu cuenta
+                </h2>
+                <span className="muted">
+                  {count} {count === 1 ? "producto" : "productos"}
+                </span>
+              </div>
+              {order.length ? (
+                <>
+                  <OrderContents
+                    order={order}
+                    changeQuantity={state.changeQuantity}
+                    removeItem={state.removeItem}
+                  />
+                  <TipPorcentageForm {...state} />
+                  <OrderTotals order={order} percent={state.percent} />
+                  <button
+                    className="primary"
+                    disabled={!!state.error}
+                    onClick={state.placeOrder}
+                  >
+                    Finalizar cuenta
+                  </button>
+                  <p className="footnote">
+                    Podrás revisar el comprobante antes de empezar otra orden.
+                  </p>
+                </>
+              ) : (
+                <div className="empty">
+                  <span aria-hidden="true">＋</span>
+                  <h3>Tu cuenta empieza aquí</h3>
+                  <p>Selecciona productos del menú para comenzar.</p>
+                </div>
+              )}
+            </section>
           </div>
-        </div>
-
-        <div className="border border-dashed border-slate-300 p-5 rounded-lg space-y-10">
-          {order.length > 0 ? (
-            <>
-              <OrderContents order={order} removeItem={removeItem} />
-
-              <TipPorcentageForm setTip={setTip} tip={tip} />
-
-              <OrderTotals order={order} tip={tip} placeOrder={placeOrder} />
-            </>
-          ) : (
-            <p className="text-center">La orden esta vacia</p>
-          )}
-        </div>
+        )}
       </main>
+      {!receipt && count > 0 && (
+        <a
+          className="mobile-bar"
+          href="#account-title"
+          onClick={() => document.getElementById("account-title")?.focus()}
+        >
+          Ver cuenta · {count} {count === 1 ? "producto" : "productos"} ·{" "}
+          {formatCurrency(state.totals.total)} <span aria-hidden="true">↑</span>
+        </a>
+      )}
+      <footer>Calculadora de propinas y consumo · React + TypeScript</footer>
     </>
   );
 }
-
-export default App;

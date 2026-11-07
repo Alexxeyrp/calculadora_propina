@@ -1,43 +1,73 @@
+﻿import { useRef } from "react";
 import { formatCurrency } from "../helpers";
-import type { MenuItem, OrderItem } from "../types";
-
-type OrderContentsProps = {
-  order: OrderItem[];
-  removeItem: (id: MenuItem["id"]) => void;
-};
-
+import type { OrderItem } from "../types";
 export default function OrderContents({
   order,
+  changeQuantity,
   removeItem,
-}: OrderContentsProps) {
+}: {
+  order: OrderItem[];
+  changeQuantity: (id: number, delta: number) => void;
+  removeItem: (id: number) => void;
+}) {
+  const list = useRef<HTMLDivElement>(null);
+  function restoreFocus(index: number) {
+    requestAnimationFrame(() => {
+      const buttons =
+        list.current?.querySelectorAll<HTMLButtonElement>(".decrease");
+      if (buttons?.length) buttons[Math.min(index, buttons.length - 1)].focus();
+      else document.getElementById("account-title")?.focus();
+    });
+  }
   return (
-    <div>
-      <h2 className="font-black text-4xl">Consumo</h2>
-      <div className="space-y-3 mt-10">
-        {order.map((item) => (
-            <div
-              key={item.id}
-              className="flex justify-between items-center border-t border-gray-200 py-5 last-of-type:border-b"
-            >
-              <div>
-                <p className="text-lg">
-                  {item.name} - {formatCurrency(item.price)}
-                </p>
-                <p className="font-black">
-                  Cantidad: {item.quantity} -{" "}
-                  {formatCurrency(item.price * item.quantity)}
-                </p>
-              </div>
+    <div ref={list}>
+      {order.map((item, index) => (
+        <div className="order-line" key={item.id}>
+          <div className="line-heading">
+            <strong>{item.name}</strong>
+            <strong>
+              {formatCurrency(Math.round(item.price * 100) * item.quantity)}
+            </strong>
+          </div>
+          <div className="line-controls">
+            <span className="muted">
+              {formatCurrency(Math.round(item.price * 100))} / unidad
+            </span>
+            <div className="quantity">
               <button
-                className="bg-red-600 h-8 w-8 rounded-full text-white font-black"
-                onClick={() => removeItem(item.id)}
+                className="decrease"
+                aria-label={`Reducir cantidad de ${item.name}`}
+                onClick={() => {
+                  changeQuantity(item.id, -1);
+                  if (item.quantity === 1) restoreFocus(index);
+                }}
               >
-                X
+                −
+              </button>
+              <span aria-label={`Cantidad de ${item.name}`}>
+                {item.quantity}
+              </span>
+              <button
+                disabled={item.quantity >= 9999}
+                aria-label={`Aumentar cantidad de ${item.name}`}
+                onClick={() => changeQuantity(item.id, 1)}
+              >
+                +
               </button>
             </div>
-          ))
-        }
-      </div>
+            <button
+              className="remove"
+              aria-label={`Eliminar ${item.name}`}
+              onClick={() => {
+                removeItem(item.id);
+                restoreFocus(index);
+              }}
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

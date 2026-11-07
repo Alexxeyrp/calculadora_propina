@@ -1,47 +1,62 @@
-import type {Dispatch, SetStateAction} from "react";
-
-const tipOptions = [
-  {
-    id: "tip-10",
-    value: 0.1,
-    label: "10%",
-  },
-  {
-    id: "tip-20",
-    value: 0.2,
-    label: "20%",
-  },
-  {
-    id: "tip-50",
-    value: 0.5,
-    label: "50%",
-  },
-];
-
-type TipPorcentageFormProps = {
-  setTip: Dispatch<SetStateAction<number>>;
-  tip: number;
+﻿type Props = {
+  selection: string;
+  custom: string;
+  error: string;
+  setSelection: (value: string) => void;
+  setCustom: (value: string) => void;
 };
-
-export default function TipPorcentageForm({ setTip, tip }: TipPorcentageFormProps) {
+export default function TipPorcentageForm({
+  selection,
+  custom,
+  error,
+  setSelection,
+  setCustom,
+}: Props) {
   return (
-    <div>
-      <h3 className="font-black text-2xl">Propinas</h3>
-      <form>
-        {tipOptions.map((tipOption) => (
-          <div className="flex gap-2" key={tipOption.id}>
-            <label htmlFor={tipOption.id}>{tipOption.label}</label>
-            <input 
-            id={tipOption.id}
-             type="radio" 
-             name="tip" 
-             value={tipOption.value}
-             checked={tip === tipOption.value}
-             onChange={(e) => setTip(+e.target.value)}
-             />
-          </div>
+    <fieldset>
+      <legend>Propina</legend>
+      <div className="tip-options">
+        {["0", "10", "15", "20", "custom"].map((value) => (
+          <label className="tip-option" key={value}>
+            <input
+              type="radio"
+              name="tip"
+              value={value}
+              checked={selection === value}
+              onChange={() => setSelection(value)}
+            />
+            <span>
+              {value === "0"
+                ? "Sin propina"
+                : value === "custom"
+                  ? "Personalizada"
+                  : `${value}%`}
+            </span>
+          </label>
         ))}
-      </form>
-    </div>
+      </div>
+      {selection === "custom" && (
+        <div className="custom-tip">
+          <label htmlFor="custom-tip">Porcentaje personalizado (%)</label>
+          <input
+            id="custom-tip"
+            inputMode="decimal"
+            type="text"
+            value={custom}
+            onChange={(event) => setCustom(event.target.value)}
+            aria-invalid={!!error}
+            aria-describedby={error ? "tip-error" : "tip-hint"}
+          />
+          <p id="tip-hint" className="muted">
+            De 0 a 100, con hasta dos decimales.
+          </p>
+          {error && (
+            <p id="tip-error" className="error">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+    </fieldset>
   );
 }

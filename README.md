@@ -1,115 +1,97 @@
-# Calculadora de Propinas y Consumo
+﻿# Calculadora de propinas y consumo
 
-Aplicacion web desarrollada con React para calcular el total de una orden y el porcentaje de propina de forma rapida e intuitiva. Este proyecto forma parte de mi proceso de aprendizaje en un curso de React, y me permitio practicar conceptos clave como el manejo de estado, componentes reutilizables, tipado con TypeScript y separacion de responsabilidades dentro de una aplicacion frontend.
+Selecciona productos de un menú, ajusta cantidades y calcula el total con una propina opcional. Al finalizar, obtienes un comprobante con el detalle de la cuenta. Todos los importes están expresados en **USD**.
 
-El objetivo principal de la app es resolver una situacion comun: seleccionar productos de un menu, calcular el subtotal de consumo, elegir un porcentaje de propina y obtener el total final a pagar.
+**[Ver demo pública](https://calculadorapropinaejercicio.netlify.app/)** · [Repositorio](https://github.com/Alexxeyrp/calculadora_propina)
 
-## Que problema resuelve
+> La demo corresponde a la versión publicada anteriormente. Las mejoras de esta entrega se han realizado y comprobado localmente; no se ha desplegado esta versión.
 
-En muchos contextos, especialmente en restaurantes o pedidos grupales, calcular propinas puede volverse repetitivo o propenso a errores. Esta aplicacion automatiza ese calculo y permite:
+## Funcionalidades
 
-- Agregar productos del menu a una orden.
-- Aumentar la cantidad si se selecciona un producto repetido.
-- Eliminar productos de la orden.
-- Seleccionar un porcentaje de propina.
-- Calcular subtotal, propina y total final.
-- Reiniciar la orden al guardarla.
+- Añadir productos sin duplicar líneas; aumentar, reducir o eliminar todas las unidades de un producto.
+- Propinas de 0%, 10%, 15%, 20% y personalizada entre 0 y 100 con hasta dos decimales. Admite coma o punto decimal.
+- Subtotal y total en céntimos; la propina se redondea una sola vez.
+- Comprobante en memoria con productos, cantidades, precios, porcentaje aplicado y totales. Permanece hasta seleccionar «Nueva orden»; no se conserva al recargar.
+- Recuperación del pedido en curso mediante un borrador versionado en localStorage.
+- Barra inferior móvil con suma de unidades y acceso directo a la cuenta; resumen fijo con desplazamiento interno en escritorio.
+- Radios nativos, errores asociados al campo, anuncios breves, foco visible y gestión del foco al eliminar líneas, finalizar y empezar otra orden.
+- Interfaz en español, diseño adaptable y respeto de la preferencia de movimiento reducido.
 
-## Lo que practique
+## Capturas de esta versión local
 
-Este proyecto esta enfocado en reforzar bases importantes de React:
+Las capturas se generan con el navegador real mediante el script de comprobación descrito abajo.
 
-- Uso de `useState` para manejar la orden y el porcentaje de propina.
-- Creacion de un custom hook (`useOrder`) para centralizar la logica de negocio.
-- Uso de `useMemo` para calcular subtotal, propina y total de forma eficiente.
-- Comunicacion entre componentes mediante props.
-- Renderizado condicional para mostrar la orden solo cuando hay productos seleccionados.
-- Tipado de datos con TypeScript para trabajar con estructuras mas seguras.
-- Estilos con Tailwind CSS para construir una interfaz clara y responsive.
+![Cuenta en escritorio](docs/screenshots/desktop.png)
 
-## Tecnologias utilizadas
+![Cuenta en móvil](docs/screenshots/mobile.png)
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- ESLint
-- React Compiler
+![Comprobante](docs/screenshots/receipt.png)
 
-## Estructura principal
+## Origen y mejoras propias
 
-```text
-src/
-  components/
-    MenuItem.tsx
-    OrderContents.tsx
-    OrderTotals.tsx
-    TipPorcentageForm.tsx
-  data/
-    db.ts
-  helpers/
-    index.ts
-  hooks/
-    useOrder.ts
-  types/
-    index.ts
-  App.tsx
-```
+El proyecto nació como un ejercicio de un curso de React para practicar componentes, props, estado y hooks. Se conserva esa base con React, TypeScript, Vite, Tailwind CSS y React Compiler.
 
-## Componentes destacados
+Esta ampliación incorpora el flujo de finalización y comprobante, edición de cantidades, validación de propinas, persistencia defensiva, cálculos en céntimos, accesibilidad, diseño adaptable, pruebas y CI. También elimina el producto duplicado del catálogo y unifica el formato monetario.
 
-`useOrder`
-Centraliza el estado de la aplicacion. Desde este hook se controla la orden, la propina, la logica para agregar productos, eliminar productos y reiniciar la orden.
+## Estructura y decisiones
 
-`OrderTotals`
-Calcula y muestra el subtotal, la propina y el total a pagar. Utiliza `useMemo` para evitar calculos innecesarios cuando los datos no cambian.
+- [App](src/App.tsx): composición, regiones y foco del comprobante y nueva orden.
+- [Componentes](src/components/): menú, líneas de consumo, opciones de propina y totales.
+- [useOrder](src/hooks/useOrder.ts): estado de la cuenta, operaciones y copia independiente del comprobante.
+- [Helpers](src/helpers/index.ts): validación y cálculos puros. Los precios del catálogo se convierten a céntimos al calcular; el formato monetario siempre recibe céntimos.
+- [Persistencia](src/helpers/storage.ts): inicialización perezosa antes de la primera escritura. Solo almacena identificadores y cantidades, junto con la propina válida; recupera nombres y precios del catálogo actual.
+- [Catálogo](src/data/db.ts) y [tipos](src/types/index.ts): datos y contratos compartidos.
+- [CI](.github/workflows/ci.yml): instalación reproducible, lint, pruebas y compilación con comprobación de tipos.
 
-`TipPorcentageForm`
-Permite seleccionar el porcentaje de propina mediante inputs tipo radio, manteniendo la seleccion sincronizada con el estado de React.
+El borrador usa la clave propia `calculadora-propina:draft:v1`. Rechaza versiones desconocidas, identificadores inexistentes, duplicados y cantidades inválidas. Las cantidades se limitan a 9.999 unidades por línea. Los errores de almacenamiento no interrumpen el uso de la calculadora y nunca se borran claves de otras aplicaciones.
 
-`OrderContents`
-Muestra los productos agregados a la orden y permite eliminarlos.
+Si una propina personalizada es inválida, se muestra el error, se aplica provisionalmente 0% y no se permite finalizar. En el borrador solo se conserva una propina válida (0% en ese caso). Al finalizar o vaciar la cuenta se elimina el borrador. «Nueva orden» restablece todos los controles.
 
-## Mejoras implementadas
+No hay backend, autenticación ni historial permanente de cuentas.
 
-- Separacion de la logica principal en un custom hook.
-- Componentizacion de la interfaz para que el codigo sea mas facil de leer y mantener.
-- Calculos derivados optimizados con `useMemo`.
-- Interfaz responsive usando Tailwind CSS.
-- Estado inicial limpio y reinicio de orden despues de guardarla.
+## Desarrollo
 
-## Posibles mejoras futuras
-
-- Mejorar la experiencia visual con una UI mas pulida y moderna.
-- Agregar animaciones suaves al anadir o eliminar productos.
-- Permitir porcentajes de propina personalizados.
-- Guardar ordenes en localStorage para mantener datos al recargar la pagina.
-- Anadir filtros o categorias al menu.
-- Agregar pruebas unitarias para validar la logica del hook `useOrder`.
-- Mejorar la accesibilidad de los controles interactivos.
-
-## Como ejecutar el proyecto
-
-Instalar dependencias:
+Utiliza **Node 22.13 o posterior de la rama 22** (archivo [.nvmrc](.nvmrc)); también son compatibles Node 24 y 26. La comprobación local se realizó con Node 22.16.0.
 
 ```bash
-npm install
-```
-
-Ejecutar en modo desarrollo:
-
-```bash
+npm ci
 npm run dev
+npm run lint
+npm test
+npm run test:watch
+npm run build
+npm run preview
+npm run format
 ```
 
-Crear una version de produccion:
+`npm run build` ejecuta `tsc -b` antes de generar la carpeta `dist`.
+
+## Pruebas
+
+Vitest y React Testing Library cubren adición repetida, cambios de cantidad, eliminación, cálculos y redondeo, propinas válidas e inválidas, comprobante, nueva orden, foco, restauración, datos corruptos y almacenamiento bloqueado.
+
+Para repetir la comprobación de navegador y regenerar capturas, instala Chromium y ejecuta el servidor en otra terminal:
 
 ```bash
-npm run build
+npx playwright install chromium
+npm run dev -- --port 5180
+npm run test:browser
 ```
 
-## Aprendizaje principal
+El script utiliza por defecto `http://127.0.0.1:5180`. Puedes cambiarlo con la variable de entorno `APP_URL`. Comprueba anchos de 320, 390, 768, 1024 y 1440 px, ausencia de desbordamiento horizontal, restauración al recargar, acceso móvil a la cuenta, controles sin quedar ocultos bajo la barra, propina, comprobante y navegación con teclado. Guarda capturas reales en [docs/screenshots](docs/screenshots/).
 
-Mas que una calculadora, este proyecto representa una practica real de como construir una aplicacion React organizada. Aprendi a dividir responsabilidades, mover logica fuera de los componentes visuales y trabajar con datos derivados a partir del estado.
+## Netlify
 
-Es un proyecto pequeno, pero muestra fundamentos importantes para seguir creciendo como desarrollador frontend: claridad en el codigo, manejo de estado, composicion de componentes y atencion a la experiencia del usuario.
+- Comando de compilación: `npm run build`.
+- Carpeta de publicación: `dist`.
+- Versión de Node: 22.13 o posterior de la rama 22.
+
+El despliegue se realiza desde Netlify conectando el repositorio o publicando la compilación. Esta entrega no hace push ni despliegue.
+
+## Comprobaciones de esta entrega
+
+- Lint, 27 pruebas automatizadas y compilación con comprobación de tipos: correctos.
+- Chromium: flujo de recarga, propinas, comprobante y nueva orden; teclado y foco; anchos de 320, 390, 768, 1024 y 1440 px, sin desbordamiento horizontal.
+- Capturas reales revisadas de escritorio, móvil y comprobante.
+- Se aplicaron actualizaciones compatibles de dependencias. npm audit sigue indicando 10 avisos moderados en dependencias de desarrollo de ESLint/TypeScript ESLint asociados a minimatch; la corrección automática restante propone un cambio mayor y queda pendiente de una revisión específica.
+- La comprobación de accesibilidad cubre semántica, teclado, foco y presentación visual; no se ha realizado una auditoría con lectores de pantalla ni una prueba en dispositivos físicos.

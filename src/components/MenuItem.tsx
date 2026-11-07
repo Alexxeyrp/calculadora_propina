@@ -1,20 +1,23 @@
-import type { MenuItem } from "../types";
-
-type MenuItemProps = {
-  item: MenuItem;
-  addItem: (item : MenuItem) => void;
-};
-
-export default function MenuItem({ item, addItem }: MenuItemProps) {
+﻿import type { MenuItem as Item } from "../types";
+import { formatCurrency } from "../helpers";
+export default function MenuItem({
+  item,
+  addItem,
+}: {
+  item: Item;
+  addItem: (item: Item) => void;
+}) {
   return (
-    <>
-      <button
-        className="border-2 border-teal-400 hover:bg-teal-200 w-full p-3 flex justify-between"
-        onClick={() => addItem(item)}
-      >
-        <p>{item.name}</p>
-        <p className="font-black">${item.price}</p>
-      </button>
-    </>
+    <button
+      className="menu-item"
+      onClick={() => addItem(item)}
+      aria-label={`Añadir ${item.name}`}
+    >
+      <span>{item.name}</span>
+      <strong>{formatCurrency(Math.round(item.price * 100))}</strong>
+      <span className="add-mark" aria-hidden="true">
+        +
+      </span>
+    </button>
   );
 }
